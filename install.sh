@@ -1,11 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-cd "$(dirname "$0")"
+HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PKG="$HERE/package"
+ID="org.kde.plasma.audiodeviceswitcher-ng"
 
-DEST="${HOME}/.local/share/plasma/plasmoids/org.kde.plasma.audiodeviceswitcher-ng"
+if ! command -v kpackagetool6 >/dev/null 2>&1; then
+    echo "kpackagetool6 not found."
+    exit 1
+fi
 
-echo "Copying ${PWD}/package/"
-echo "  to -> ${DEST}/"
+echo "Upgrading $ID..."
+if kpackagetool6 --type Plasma/Applet --show "$ID" >/dev/null 2>&1; then
+    kpackagetool6 --type Plasma/Applet --upgrade "$PKG"
+else
+    kpackagetool6 --type Plasma/Applet --install "$PKG"
+fi
 
-rm -rf "${DEST}"
-cp -a "package" "${DEST}"
+systemctl --user restart plasma-plasmashell.service
+echo "Installed Audio Device Switcher NG 1.0.2."
