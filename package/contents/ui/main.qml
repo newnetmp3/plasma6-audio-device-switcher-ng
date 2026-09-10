@@ -1,6 +1,5 @@
 /*
     Copyright 2017 Andreas Krutzler <andreas.krutzler@gmx.net>
-
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
     published by the Free Software Foundation; either version 2 of
@@ -8,7 +7,6 @@
     accepted by the membership of KDE e.V. (or its successor approved
     by the membership of KDE e.V.), which shall act as a proxy
     defined in Section 14 of version 3 of the license.
-
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -21,7 +19,6 @@
 import QtQuick 6.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls 6.0 as QtControls
-
 import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.plasmoid 2.0
 
@@ -34,67 +31,50 @@ PlasmoidItem {
     Layout.minimumWidth: gridLayout.implicitWidth
     Layout.minimumHeight: gridLayout.implicitHeight
     preferredRepresentation: fullRepresentation
-
     property int labeling: plasmoid.configuration.labeling
     property int naming: plasmoid.configuration.naming
     property bool useVerticalLayout: plasmoid.configuration.useVerticalLayout
     property bool sourceInsteadofSink: plasmoid.configuration.sourceInsteadofSink
+    property bool showVirtualDevices: plasmoid.configuration.showVirtualDevices
 
     readonly property var sinkModelFiltered: PulseObjectFilterModel {
         id: sinkModelFiltered
-        filterOutInactiveDevices: true  // ← This avoids showing devices that can't be selected.
-        filterVirtualDevices: false
+        filterOutInactiveDevices: true
+        filterVirtualDevices: !showVirtualDevices
         sourceModel: SinkModel {}
     }
+
     readonly property var sourceModelFiltered: PulseObjectFilterModel {
         id: sourceModelFiltered
-        filterOutInactiveDevices: true  // ← This avoids showing devices that can't be selected.
-        filterVirtualDevices: false
+        filterOutInactiveDevices: true
+        filterVirtualDevices: !showVirtualDevices
         sourceModel: SourceModel {}
     }
-    property var filteredModel: sourceInsteadofSink ? sourceModelFiltered : sinkModelFiltered
 
+    property var filteredModel: sourceInsteadofSink ? sourceModelFiltered : sinkModelFiltered
     property string defaultIconName: plasmoid.configuration.defaultIconName
 
-    // Inspired by:
-    // https://github.com/KDE/plasma-pa/blob/master/applet/contents/code/icon.js
-    // https://gitlab.freedesktop.org/pulseaudio/pulseaudio/-/blob/300db779224625144d6279d230c2daa857c967d8/src/modules/alsa/alsa-mixer.c#L2794
-    // https://github.com/Apxdono/plasma-audio-device-switcher/commit/762ef92e5129c8b08bd94939bf2e88473217f84e
     function formFactorIcon(device, port, fallback) {
-        // On my machine, device.formFactor returns nice values for sources,
-        // but mostly useless values for sinks.
-        //
-        // This code here tries to be "smart" and look at multiple sources for
-        // finding the best icon.
-
-        // Some devices (e.g. the Null devices), don't have any ports.
         if (!port) {
             port = {}
         }
 
         const iconName = device.iconName || device.properties["device.icon_name"] || device.properties["device.icon-name"];
         if (iconName && !/^audio-card/.test(iconName)) {
-            // On my system, `device.properties["device.icon_name"]` is populated, but everything is
-            // either "audio-card-analog-usb" or "audio-card-analog-pci", which share the same icon.
-            // Let's use the device's declared icon as long as it's populated with something useful.
             return iconName;
         }
 
         const data = {
-            formFactor:        device.formFactor  || "",  // e.g. "internal", "webcam", "microphone"
-            deviceName:        device.name        || "",  // e.g. "alsa_output.pci-0000_00_1f.3.hdmi-stereo-extra1"
-            portName:          port.name          || "",  // e.g. "hdmi-output-1"
-            deviceDescription: device.description || "",  // e.g. "Built-in Audio Digital Stereo (HDMI 2)"
-            portDescription:   port.description   || "",  // e.g. "HDMI / DisplayPort 2"
+            formFactor: device.formFactor || "",
+            deviceName: device.name || "",
+            portName: port.name || "",
+            deviceDescription: device.description || "",
+            portDescription: port.description || "",
         }
 
-        // Removing number suffixes:
         data.portName = data.portName.replace(/-[0-9]+$/, "")
 
-        // console.log(JSON.stringify(data, null, 2));  // DEBUG
-
         const rules = [
-            // Generic names and icons. Lowest score.
             {
                 icon: "audio-card",
                 score: 1,
@@ -104,7 +84,6 @@ PlasmoidItem {
             {
                 icon: "audio-card",
                 score: 1,
-                // LINE in/out don't have good icons.
                 portName: /^analog-input-linein|^analog-output-lineout|^multichannel-input|^multichannel-output/i
             },
             {
@@ -114,71 +93,55 @@ PlasmoidItem {
             },
             {
                 icon: "computer",
-                // icon: "computer-symbolic",
                 score: 2,
                 formFactor: /^computer$/i,
             },
             {
                 icon: "preferences-system-bluetooth",
-                // icon: "network-bluetooth",
                 score: 2,
                 deviceName: /^bluez/i,
             },
             {
                 icon: "media-removable-symbolic",
-                // icon: "drive-removable-media-usb",
-                // icon: "drive-removable-media-usb-pendrive",
                 score: 2,
                 deviceName: /^alsa[^.]+\.usb/i,
             },
             {
                 icon: "question",
                 score: 1,
-                // The Null output and Null input devices.
                 deviceName: /^null-/i,
             },
-
-            // Basic audio devices.
             {
                 icon: "audio-speakers-symbolic",
-                // icon: "speaker",
                 score: 3,
                 formFactor: /^speaker$/i,
                 portName: /^analog-output-speaker/i,
             },
             {
                 icon: "audio-input-microphone",
-                // icon: "audio-input-microphone-symbolic",
-                // icon: "microphone",
                 score: 3,
                 formFactor: /^microphone$/i,
                 portName: /^analog-input-microphone(?!-headset)|analog-input-mic$/i,
             },
             {
                 icon: "audio-headphones",
-                // icon: "headphone",
-                // icon: "headphones",
                 score: 3,
                 formFactor: /^headphone$/i,
                 portName: /^analog-output-headphones?|^virtual-surround-7.1/i,
             },
             {
                 icon: "audio-headset",
-                // icon: "headset",
                 score: 4,
                 formFactor: /^headset$/i,
                 portName: /^analog-input-microphone-headset|^analog-chat-(input|output)|^steelseries-arctis/i,
             },
-
-            // Mobile phones. Quite unique names.
             {
-                // icon: "phone",
                 icon: "phone-symbolic",
                 score: 3,
                 formFactor: /^phone$/i,
             },
             {
-                icon: "handset",  // Looks just like the "phone" icon.
+                icon: "handset",
                 score: 3,
                 formFactor: /^handset$/i,
             },
@@ -187,12 +150,8 @@ PlasmoidItem {
                 score: 3,
                 formFactor: /^hands-free$/i,
             },
-
-            // A/V devices.
             {
-                // icon: "video-television",
                 icon: "tv",
-                // icon: "tv-symbolic",
                 score: 4,
                 formFactor: /^tv$/i,
             },
@@ -205,25 +164,18 @@ PlasmoidItem {
                 icon: "hifi",
                 score: 4,
                 formFactor: /^hifi$/i,
-                // People using S/PDIF digital signaling are likely using Hi-Fi systems.
                 portName: /^iec958-/i,
             },
             {
                 icon: "audio-radio",
-                // icon: "audio-radio-symbolic",
-                // icon: "radio",
                 score: 4,
                 portName: /^analog-input-radio/,
             },
             {
                 icon: "camera-web",
-                // icon: "camera-web-symbolic",
-                // icon: "webcam",
                 score: 4,
                 formFactor: /^webcam$/i,
             },
-
-            // Other devices.
             {
                 icon: "car",
                 score: 4,
@@ -233,15 +185,10 @@ PlasmoidItem {
 
         let icon = fallback || "audio-card"
         let score = 0
-
-        // This function may be a bit slow if it is called too often.
-        // TODO: Figure out how to cache this result.
         for (const rule of rules) {
             for (const attr of Object.keys(data)) {
                 if (rule[attr]) {
-                    // console.log("TESTING", attr, data[attr], rule[attr])  // DEBUG
                     if (rule[attr].test(data[attr])) {
-                        // console.log("MATCH!", attr, "=", data[attr], "icon=", rule.icon, "score=", rule.score)  // DEBUG
                         if (rule.score >= score) {
                             icon = rule.icon
                             score = rule.score
@@ -250,30 +197,26 @@ PlasmoidItem {
                 }
             }
         }
-
         return icon
     }
 
     function getNaming(model, device, port) {
-        // Node nickname, unless it doesn't exist
         if (naming !== 0 && naming !== 1 && device.properties) {
             const nick = device.properties["node.nick"];
             if (nick) return nick;
         }
 
-        // Port description, unuless it also doesn't exist
         if (naming !== 0 && port) {
             const desc = port.description;
             if (desc) return desc;
         }
 
-        // Device description and fallback
         return model.Description;
     }
 
     GridLayout {
         id: gridLayout
-        flow: useVerticalLayout? GridLayout.TopToBottom : GridLayout.LeftToRight
+        flow: useVerticalLayout ? GridLayout.TopToBottom : GridLayout.LeftToRight
         anchors.fill: parent
 
         Repeater {
@@ -286,17 +229,19 @@ PlasmoidItem {
 
                 id: tab
                 enabled: currentPort !== null
-
                 text: labeling !== 2 ? currentDescription + (device.muted ? " (muted)" : "") : ""
                 icon.name: labeling !== 1 ? formFactorIcon(device, currentPort, defaultIconName) : ""
 
                 checkable: true
                 autoExclusive: true
 
-                QtControls.ToolTip {
-                    visible: hovered
-                    text: currentDescription
-                }
+                // Plasma 6 / Qt 6 fix:
+                // Keep the tooltip attached to the button instead of creating
+                // a separate ToolTip object whose popup can disturb hover.
+                QtControls.ToolTip.visible: hovered
+                QtControls.ToolTip.delay: 500
+                QtControls.ToolTip.timeout: -1
+                QtControls.ToolTip.text: currentDescription
 
                 Layout.fillHeight: true
                 Layout.fillWidth: true
