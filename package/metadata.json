@@ -15,13 +15,13 @@
             }
         ],
         "Category": "Multimedia",
-        "Description": "Simple widget to change the default audio output device/sink",
+        "Description": "Simple widget to change the default audio device, with optional virtual-device visibility.",
         "Icon": "org.kde.plasma.volume",
         "Id": "org.kde.plasma.audiodeviceswitcher-ng",
         "License": "GPL",
         "Name": "Audio Device Switcher NG",
-        "Version": "1.0.0",
-        "Website": "https://github.com/denilsonsa/plasma-audio-device-switcher"
+        "Version": "1.0.2",
+        "Website": "https://github.com/newnetmp3/plasma6-audio-device-switcher-ng"
     },
     "KPackageStructure": "Plasma/Applet",
     "X-Plasma-NotificationArea": "false",
