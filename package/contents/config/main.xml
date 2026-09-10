@@ -6,49 +6,34 @@
   <kcfgfile name=""/>
 
   <group name="General">
-
     <entry name="labeling" type="Enum">
       <choices>
-        <choice name="iconWithDescription">
-          <label>Icon with description</label>
-        </choice>
-        <choice name="descriptionOnly">
-          <label>Description only</label>
-        </choice>
-        <choice name="iconOnly">
-          <label>Icon only</label>
-        </choice>
+        <choice name="iconWithDescription"><label>Icon with description</label></choice>
+        <choice name="descriptionOnly"><label>Description only</label></choice>
+        <choice name="iconOnly"><label>Icon only</label></choice>
         <default>iconWithDescription</default>
       </choices>
     </entry>
-
     <entry name="naming" type="Enum">
       <choices>
-        <choice name="deviceDescription">
-          <label>Device description</label>
-        </choice>
-        <choice name="portDescription">
-          <label>Port description</label>
-        </choice>
-        <choice name="nodeNickname">
-          <label>Node nickname</label>
-        </choice>
+        <choice name="deviceDescription"><label>Device description</label></choice>
+        <choice name="portDescription"><label>Port description</label></choice>
+        <choice name="nodeNickname"><label>Node nickname</label></choice>
         <default>deviceDescription</default>
       </choices>
     </entry>
-
     <entry name="useVerticalLayout" type="Bool">
       <default>true</default>
     </entry>
-
     <entry name="sourceInsteadofSink" type="Bool">
       <default>false</default>
     </entry>
-
+    <entry name="showVirtualDevices" type="Bool">
+      <label>Show virtual devices</label>
+      <default>false</default>
+    </entry>
     <entry name="defaultIconName" type="String">
       <default>audio-card</default>
     </entry>
-
   </group>
-
 </kcfg>
